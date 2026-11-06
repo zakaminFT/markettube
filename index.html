@@ -133,9 +133,14 @@ main{margin-left:var(--side);padding:calc(var(--top) + 8px) 24px 60px;min-height
 .offline .row2{display:flex;gap:10px;justify-content:flex-end}.offline .row2 a,.offline .row2 button{height:36px;padding:0 16px;border-radius:18px;background:var(--bg3);display:inline-flex;align-items:center;font-weight:500}
 .offline .row2 button.p{background:var(--accent);color:#0f0f0f}
 .banner{background:#2a2410;border:1px solid #5a4a14;color:#f3d98b;border-radius:10px;padding:10px 14px;margin:6px 0 10px;font-size:13px;display:flex;gap:12px;align-items:center}.banner button{color:#fff;text-decoration:underline;font-size:13px}
-.theater{position:fixed;inset:0;z-index:80;background:#000e;display:none;overflow-y:auto;padding:24px 24px 40px}
+.theater{position:fixed;inset:0;z-index:80;background:var(--bg);display:none;overflow-y:auto;padding:24px 24px 40px}
 .theater.show{display:block}
-.theater .box{max-width:min(1280px,calc((100vh - 220px) * 16 / 9));margin:0 auto}
+.theater .box{max-width:1720px;margin:0 auto}
+.theater .tgrid{display:grid;grid-template-columns:minmax(0,1fr) 402px;gap:24px;align-items:start}
+.theater .rcol{display:flex;flex-direction:column;gap:8px}
+.theater .rcol h3{font-size:16px;margin:0 0 4px}
+.theater .rcol .mini-v .vt{font-size:14px;line-height:20px}
+@media (max-width:1100px){.theater .tgrid{grid-template-columns:1fr}}
 .theater .tbar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .theater .tbar .x{margin-left:auto;width:40px;height:40px;border-radius:50%;background:var(--bg3);display:grid;place-items:center;font-size:22px}
 .theater .tbar .x:hover{background:var(--hover)}
@@ -159,7 +164,7 @@ body.lock{overflow:hidden}
 <body>
 <header class="top">
   <button class="burger" id="burger" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg></button>
-  <a class="logo" href="#home" aria-label="MarketTube home"><span class="mark"><svg viewBox="0 0 24 24"><path d="M6 3l15 9-15 9z"/></svg></span>MarketTube<sup>GB</sup></a>
+  <a class="logo" href="#home" aria-label="MarketTube home"><span class="mark"><svg viewBox="0 0 24 24"><path d="M6 3l15 9-15 9z"/></svg></span>MarketTube<sup>v7</sup></a>
   <div class="search"><form id="sf" role="search"><input id="q" type="search" placeholder="Search" autocomplete="off" aria-label="Search"><button aria-label="Search"><svg viewBox="0 0 24 24"><path d="M20.87 20.17l-5.59-5.59A6.96 6.96 0 0 0 17 10a7 7 0 1 0-7 7c1.75 0 3.35-.65 4.58-1.71l5.59 5.59.7-.71zM10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg></button></form></div>
   <span class="pill"><b>●</b> No sign-in · nothing tracked</span>
 </header>
@@ -277,13 +282,14 @@ let playing=null,theaterY=0;
 function closeTheater(){const th=$('#theater');if(!th.classList.contains('show'))return;killPlayer();th.classList.remove('show');th.innerHTML='';document.body.classList.remove('lock');playing=null;window.scrollTo(0,theaterY)}
 function openTheater(id){const v=byId.get(id);if(!v)return;if(!playing)theaterY=window.scrollY;playing=id;
   hist=[{id,at:Date.now()},...hist.filter(h=>h.id!==id)].slice(0,300);S.set('hist',hist);
-  const isS=saved.includes(id),rel=related(v).slice(0,8);
-  $('#theater').innerHTML=`<div class="box"><div class="tbar">${av(v.channel)}<div><b>${esc(v.channel)}</b><div class="vm" style="font-size:12px">${esc(v.topic)} · ${esc(when(v))}</div></div><button class="x" data-close="1" aria-label="Close player" title="Close (Esc)">×</button></div>
+  const isS=saved.includes(id),rel=related(v).slice(0,18);
+  $('#theater').innerHTML=`<div class="box"><div class="tgrid"><div>
+  <div class="tbar">${av(v.channel)}<div><b>${esc(v.channel)}</b><div class="vm" style="font-size:12px">${esc(v.topic)} · ${esc(when(v))}</div></div><button class="x" data-close="1" aria-label="Close player" title="Close (Esc)">×</button></div>
   <div class="bigp" id="bigp"></div>
   <h1 class="wt">${esc(v.title)}</h1>
   <div class="wrow"><span class="vm" style="margin-right:auto">${esc(v.duration||'')}${v.speaker?' · '+esc(v.speaker):''}</span><button class="act ${isS?'on':''}" data-save="${id}"><svg viewBox="0 0 24 24"><path d="${isS?'M5 3h14v18l-7-4-7 4z':'M17 4v14.2l-5-2.86-5 2.86V4h10m2-1H5v18l7-4 7 4V3z'}"/></svg>${isS?'Saved':'Save'}</button><a class="act" href="#watch/${id}" data-close-go="1">Full page & comments</a></div>
-  <div class="desc"><p style="margin:0"><b>Why it's on MarketTube:</b> ${esc((PATHS.map(p=>p.notes?.[id]).find(Boolean))||v.why)}</p></div>
-  <h3 style="margin:22px 0 0;font-size:18px">Up next</h3><div class="next">${rel.map(x=>`<div class="vc"><a class="th" data-inline="${x.id}" href="#watch/${x.id}">${img(x)}<span class="hint"><span><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></span><span class="dur">${esc(x.duration||'')}</span></a><a href="#watch/${x.id}" data-inline="${x.id}"><h3 class="vt">${esc(x.title)}</h3></a><div class="vm" style="font-size:12px">${esc(x.channel)}</div></div>`).join('')}</div></div>`;
+  <div class="desc"><p style="margin:0"><b>Why it's on MarketTube:</b> ${esc((PATHS.map(p=>p.notes?.[id]).find(Boolean))||v.why)}</p></div></div>
+  <aside class="rcol"><h3>Up next</h3>${rel.map(x=>`<div class="mini-v"><a class="th" data-inline="${x.id}" href="#watch/${x.id}">${img(x)}<span class="dur">${esc(x.duration||'')}</span></a><div><a href="#watch/${x.id}" data-inline="${x.id}"><h3 class="vt">${esc(x.title)}</h3></a><div class="vm">${esc(x.channel)}</div><div class="vm">${esc(when(x))}</div></div></div>`).join('')}</aside></div></div>`;
   const th=$('#theater');th.classList.add('show');th.scrollTop=0;document.body.classList.add('lock');mountPlayer($('#bigp'),id,rel[0]?.id)}
 document.addEventListener('click',e=>{if(!HOSTED)return;
   if(e.target.closest('[data-close]')||e.target.id==='theater'){e.preventDefault();closeTheater();return}
